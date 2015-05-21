@@ -34,6 +34,11 @@ object WhileSyntax {
   case object Lt extends ROp
   case object Gt extends ROp
 
+  implicit def str2ROp(s:String): ROp = s match {
+    case "<" => Lt
+    case ">" => Gt
+  }
+
   sealed abstract trait BExp
   case object True extends BExp
   case object False extends BExp
@@ -100,6 +105,45 @@ object WhileSyntax {
     case Composition(s1, s2) => blocks(s1) ++ blocks(s2)
     case i @ If(b, l, s1, s2) => Set(i) ++ blocks(s1) ++ blocks(s2)
     case w @ While(cond, l, s) => Set(w) ++ blocks(s)
+  }
+
+  def aExpr(a: AExp):Set[AExp] = a match {
+    case Ide(x) => Set.empty
+    case Number(n) => Set.empty
+    case a @ BinaryAExp(a1, op, a2) => Set(a) ++ aExpr(a1) ++ aExpr(a2)
+  }
+
+  def aExpr(b: BExp):Set[AExp] = b match {
+    case True => Set.empty
+    case False => Set.empty
+    case Not(b) => aExpr(b)
+    case BOpBExp(b1, bOp, b2) => Set.empty
+    case ROpBExp(a1, rOp, a2) => aExpr(a1) ++ aExpr(a2)
+  }
+
+  def aExpStar(s:Statement, upToBlock:Int):Set[AExp] = s match {
+      case Assignment(id, exp, l) if l <= upToBlock => aExpr(exp)
+      case Skip(l) if l <= upToBlock => Set.empty
+      case Composition(s1, s2) => aExpStar(s1, upToBlock) ++ aExpStar(s2, upToBlock)
+      case If(b, l, s1, s2) if l <= upToBlock => aExpr(b) ++ aExpStar(s1, upToBlock) ++ aExpStar(s2, upToBlock)
+      case While(cond, l, s) if l <= upToBlock => aExpr(cond) ++ aExpStar(s, upToBlock)
+      case _ => Set.empty
+    }
+
+  def aExpStar(s:Statement):Set[AExp] = aExpStar(s, blocks(s).size)
+
+  def fv(aExp: AExp):Set[Ide] = aExp match {
+    case i:Ide => Set(i)
+    case Number(n) => Set.empty
+    case BinaryAExp(a1, op, a2) => fv(a1) ++ fv(a2)
+  }
+
+  def fv(bExp: BExp):Set[Ide] = bExp match {
+    case ROpBExp(a1, rOp, a2) => fv(a1) ++ fv(a2)
+    case True => Set.empty
+    case False => Set.empty
+    case Not(b) => fv(b)
+    case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
 }
 

@@ -17,6 +17,7 @@ class WhileSpec extends FunSpec with Matchers {
     )
   )
 
+
   describe("Syntax") {
     describe("AExp") {
       it("should support implicit conversion of AOps") {
@@ -58,6 +59,20 @@ class WhileSpec extends FunSpec with Matchers {
       }
       it("should properly compute blocks") {
         blocks(prog1).map(_.l) should equal(Set(1,2,3,4))
+      }
+      it("should properly compute available expressions") {
+        val fiveTimesX = BinaryAExp(5, "*", "x")
+        val fiveTimesXMinusY = BinaryAExp(fiveTimesX, "-", "y")
+        val exp1 = ROpBExp(fiveTimesXMinusY, "<", 5)
+        aExpr(exp1) should equal (
+          Set(BinaryAExp(5, "*", "x"), BinaryAExp(fiveTimesX, "-", "y"))
+        )
+      }
+      it("should properly compute free variables") {
+        val fiveTimesX = BinaryAExp(5, "*", "x")
+        val fiveTimesXMinusY = BinaryAExp(fiveTimesX, "-", "y")
+        val exp1 = ROpBExp(fiveTimesXMinusY, "<", 5)
+        fv(exp1) should equal(Set(Ide("x"), Ide("y")))
       }
     }
   }
