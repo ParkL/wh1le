@@ -1,6 +1,11 @@
 package com.github.parkl.wh1le
 
 object WhileSyntax {
+  type FlowMember = (Int, Int)
+  trait Block {
+    val l:Int
+  }
+
   sealed abstract trait AOp
   case object Plus extends AOp
   case object Minus extends AOp
@@ -36,9 +41,6 @@ object WhileSyntax {
   case class BOpBExp(b1:BExp, bOp: BOp, b2:BExp) extends BExp
   case class ROpBExp(a1: AExp, rOp: ROp, a2: AExp) extends BExp
 
-  trait Block {
-    val l:Int
-  }
 
   sealed abstract trait Statement
   case class Assignment(id:String, exp:AExp, l:Int) extends Statement with Block
@@ -92,8 +94,12 @@ object WhileSyntax {
 
   def flowR(s:Statement): Set[FlowMember] = flow(s).collect({case (l1, l2) => (l2, l1)})
 
-//  def blocks(s:Statement): Set[Block] =
-
-  type FlowMember = (Int, Int)
+  def blocks(s:Statement): Set[Block] = s match {
+    case a @ Assignment(id, exp, l) => Set(a)
+    case s @ Skip(l) => Set(s)
+    case Composition(s1, s2) => blocks(s1) ++ blocks(s2)
+    case i @ If(b, l, s1, s2) => Set(i) ++ blocks(s1) ++ blocks(s2)
+    case w @ While(cond, l, s) => Set(w) ++ blocks(s)
+  }
 }
 

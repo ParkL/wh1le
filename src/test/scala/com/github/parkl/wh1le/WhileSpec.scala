@@ -56,9 +56,9 @@ class WhileSpec extends FunSpec with Matchers {
           Set((2,1), (2,4), (3,2), (4,3))
         )
       }
-//      it("should properly compute blocks") {
-//        blocks(prog1) should equal(Set(1,2,3,4))
-//      }
+      it("should properly compute blocks") {
+        blocks(prog1).map(_.l) should equal(Set(1,2,3,4))
+      }
     }
   }
 }
