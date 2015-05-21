@@ -21,15 +21,22 @@ class AvailableExpressionTest extends FunSpec with Matchers {
   )
 
   describe("AvailableExpression analysis") {
-    it("should behave properly for single blocks") {
+    it("should properly compute kill sets (ATTN weird!!)") {
       val ae = AvailableExpression(example)
-      val ass1 = blocks(example)
       ae.kill(1) should equal(Set.empty)
       ae.kill(2) should equal(Set.empty)
       ae.kill(3) should equal(Set.empty)
       ae.kill(4) should equal(Set(aPlusB, aTimesX, aPlus1))
       // ???
       // ae.kill(5) should equal(Set.empty)
+    }
+    it("should properly comput gen sets") {
+      val ae = AvailableExpression(example)
+      ae.gen(1) should equal(Set(aPlusB))
+      ae.gen(2) should equal(Set(aTimesX))
+      ae.gen(3) should equal(Set(aPlusB))
+      ae.gen(4) should equal(Set.empty)
+      ae.gen(5) should equal(Set(aPlusB))
     }
   }
 }

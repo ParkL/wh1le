@@ -10,12 +10,23 @@ object AvailableExpression {
 }
 
 class AvailableExpression(s:Statement) {
-  def kill(i:Int):Set[AExp] = blocks(s).find(_.l == i).get match {
+  val bx = block(s)_
+
+  def kill(i:Int):Set[AExp] = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aPrime <- aExpStar(s, i)
       if fv(aPrime).contains(id)
     } yield aPrime
     case _ => Set.empty
   }
-  //def gen(i:Int):Set[AExp] = blocks(s).
+  def gen(i:Int):Set[AExp] = bx(i).get match {
+    case Assignment(id, exp, l) => for {
+      aPrime <- aExpr(exp)
+      if !(fv(aPrime).contains(id))
+    } yield aPrime
+    case Skip(l) => Set.empty
+    case If(b, l, s1, s2) => aExpr(b)
+    case While(cond, l, s) => aExpr(cond)
+    case _ => Set.empty
+  }
 }

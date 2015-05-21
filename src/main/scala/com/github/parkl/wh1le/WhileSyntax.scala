@@ -107,6 +107,8 @@ object WhileSyntax {
     case w @ While(cond, l, s) => Set(w) ++ blocks(s)
   }
 
+  def block(s:Statement)(l:Int):Option[Block] = blocks(s).find(_.l == l)
+
   def aExpr(a: AExp):Set[AExp] = a match {
     case Ide(x) => Set.empty
     case Number(n) => Set.empty
