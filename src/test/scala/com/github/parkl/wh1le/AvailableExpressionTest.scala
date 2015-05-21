@@ -38,5 +38,18 @@ class AvailableExpressionTest extends FunSpec with Matchers {
       ae.gen(4) should equal(Set.empty)
       ae.gen(5) should equal(Set(aPlusB))
     }
+    it("should compute the solution using the algorithm") {
+      val ae = AvailableExpression(example)
+      val solve: (scala.collection.mutable.HashMap[Int, Set[AExp]], scala.collection.mutable.HashMap[Int, Set[AExp]]) = ae.solve()
+      val AEIn = solve._1 // FIXME
+      val AEOut = solve._2
+      AEIn(1) should equal(Set.empty)
+      AEIn(2) should equal(aPlusB)
+//      AEIn(3) should equal(aPlusB)
+//      AEIn(4) should equal(aPlusB)
+//      AEIn(5) should equal(Set.empty)
+
+
+    }
   }
 }

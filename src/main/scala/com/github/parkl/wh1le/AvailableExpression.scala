@@ -29,4 +29,30 @@ class AvailableExpression(s:Statement) {
     case While(cond, l, s) => aExpr(cond)
     case _ => Set.empty
   }
+
+  type EnterLeaveSet = scala.collection.mutable.Map[Int, Set[AExp]]
+
+  def solve() = {
+    var W = List[(Int, Int)]()
+    val AEEnter = scala.collection.mutable.HashMap.empty[Int, Set[AExp]]
+    val AELeave = scala.collection.mutable.HashMap.empty[Int, Set[AExp]]
+
+    W = flow(s).toList
+    labels(s).foreach( l =>
+      if(l == init(s)) AEEnter += (l -> Set.empty)
+      else AEEnter += (l -> aExpStar(s, l))
+    )
+
+    while(W.nonEmpty) {
+      val (l, lp) = W.head
+      W = W.tail
+      AELeave += (l -> ((AEEnter(l) -- kill(l)) ++ gen(l)))
+      if(AEEnter(lp).subsetOf(AELeave(l))) {
+        AEEnter += (lp -> (AEEnter(l).intersect(AELeave(l))))
+        flow(s).filter(_._1 == lp).foreach(t => W = t :: W)
+      }
+    }
+    (AEEnter, AELeave)
+  }
+
 }
