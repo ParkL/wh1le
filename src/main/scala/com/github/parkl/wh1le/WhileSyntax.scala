@@ -7,15 +7,26 @@ object WhileSyntax {
   }
 
   sealed abstract trait AOp
-  case object Plus extends AOp
-  case object Minus extends AOp
-  case object Times extends AOp
-  case object Div extends AOp
+  case object Plus extends AOp { override def toString() = "+" }
+  case object Minus extends AOp { override def toString() = "-" }
+  case object Times extends AOp { override def toString() = "*"}
+  case object Div extends AOp { override def toString() = "/" }
 
   sealed abstract trait AExp
-  case class Ide(x: String) extends AExp
-  case class Number(n: Int) extends AExp
-  case class BinaryAExp(a1:AExp, op: AOp, a2:AExp) extends AExp
+  case class Ide(x: String) extends AExp {override def toString() = x}
+  case class Number(n: Int) extends AExp { override def toString() = s"$n"}
+  case class BinaryAExp(a1:AExp, op: AOp, a2:AExp) extends AExp {
+    override def toString() = {
+      def parens(ae:AExp) = ae match {
+        case i:Ide => i
+        case n:Number => n
+        case b:BinaryAExp => s"($b)"
+      }
+      val ls = parens(a1)
+      val rs = parens(a2)
+      s"$ls $op $rs"
+    }
+  }
 
   implicit def str2AOp(op:String) = op match {
     case "+" => Plus
@@ -28,11 +39,11 @@ object WhileSyntax {
   implicit def int2Number(n:Int) = Number(n)
 
   sealed abstract trait BOp
-  case object eq extends BOp
+  case object eq extends BOp { override def toString() = "="}
 
   sealed abstract trait ROp
-  case object Lt extends ROp
-  case object Gt extends ROp
+  case object Lt extends ROp { override def toString() = "<"}
+  case object Gt extends ROp { override def toString() = ">"}
 
   implicit def str2ROp(s:String): ROp = s match {
     case "<" => Lt
@@ -40,22 +51,55 @@ object WhileSyntax {
   }
 
   sealed abstract trait BExp
-  case object True extends BExp
-  case object False extends BExp
-  case class Not(b: BExp) extends BExp
-  case class BOpBExp(b1:BExp, bOp: BOp, b2:BExp) extends BExp
-  case class ROpBExp(a1: AExp, rOp: ROp, a2: AExp) extends BExp
+  case object True extends BExp { override def toString() = "True" }
+  case object False extends BExp { override def toString() = "False"}
+  case class Not(b: BExp) extends BExp { override def toString() = s"not($b)"}
+  case class BOpBExp(b1:BExp, bOp: BOp, b2:BExp) extends BExp {
+    override def toString() = {
+      def parens(be:BExp) = be match {
+        case b: BOpBExp => s"($b)"
+        case r: ROpBExp => s"($r)"
+        case x @ _ => x
+      }
+      val lhs = parens(b1)
+      val rhs = parens(b2)
+      s"$lhs $bOp $rhs"
+    }
+  }
+  case class ROpBExp(a1: AExp, rOp: ROp, a2: AExp) extends BExp {
+    override def toString() = {
+      def parens(ae:AExp) = ae match {
+        case i:Ide => i
+        case n:Number => n
+        case b:BinaryAExp => s"($b)"
+      }
+      val lhs = parens(a1)
+      val rhs = parens(a2)
+      s"$lhs $rOp $rhs"
+    }
+  }
 
 
   sealed abstract trait Statement
-  case class Assignment(id:String, exp:AExp, l:Int) extends Statement with Block
-  case class Skip(l:Int) extends Statement with Block
-  case class Composition(s1: Statement, s2:Statement) extends Statement
-  case class If(b: BExp, l: Int, s1: Statement, s2: Statement) extends Statement with Block
-  case class While(cond: BExp, l:Int, s: Statement) extends Statement with Block
+  case class Assignment(id:String, exp:AExp, l:Int) extends Statement with Block {
+    override def toString() = s"[$id := $exp]^$l"
+  }
+  case class Skip(l:Int) extends Statement with Block {
+    override def toString() = s"[skip]^$l"
+  }
+  case class Composition(s1: Statement, s2:Statement) extends Statement {
+    override def toString() = s"$s1 ; $s2"
+  }
+  case class If(b: BExp, l: Int, s1: Statement, s2: Statement) extends Statement with Block {
+    override def toString() = s"if [$b]^$l then $s1 else $s2"
+  }
+  case class While(cond: BExp, l:Int, s: Statement) extends Statement with Block {
+    override def toString() = s"while [$cond]^$l do $s od"
+  }
 
   // TODO make tail
   implicit def program(prog: List[Statement]):Statement = prog match {
+    case Nil => ??? // empty program is undefined
     case s :: Nil => s
     case s :: ss => Composition(s, program(ss))
   }
