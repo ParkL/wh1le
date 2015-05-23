@@ -14,19 +14,19 @@ class AvailableExpression(s:Statement) {
 
   def kill(i:Int):Set[AExp] = bx(i).get match {
     case Assignment(id, exp, l) => for {
-      aPrime <- aExpStar(s, i)
+      aPrime <- aExpStar(s)
       if fv(aPrime).contains(id)
     } yield aPrime
     case _ => Set.empty
   }
   def gen(i:Int):Set[AExp] = bx(i).get match {
     case Assignment(id, exp, l) => for {
-      aPrime <- aExpr(exp)
+      aPrime <- aExp(exp)
       if !(fv(aPrime).contains(id))
     } yield aPrime
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => aExpr(b)
-    case While(cond, l, s) => aExpr(cond)
+    case If(b, l, s1, s2) => aExp(b)
+    case While(cond, l, s) => aExp(cond)
     case _ => Set.empty
   }
 
@@ -40,7 +40,7 @@ class AvailableExpression(s:Statement) {
     W = flow(s).toList
     labels(s).foreach( l =>
       if(l == init(s)) AEEnter += (l -> Set.empty)
-      else AEEnter += (l -> aExpStar(s, l))
+      else AEEnter += (l -> aExpStar(s))
     )
 
     while(W.nonEmpty) {

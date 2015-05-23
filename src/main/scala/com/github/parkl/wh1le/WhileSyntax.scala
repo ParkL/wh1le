@@ -153,30 +153,27 @@ object WhileSyntax {
 
   def block(s:Statement)(l:Int):Option[Block] = blocks(s).find(_.l == l)
 
-  def aExpr(a: AExp):Set[AExp] = a match {
+  def aExp(a: AExp):Set[AExp] = a match {
     case Ide(x) => Set.empty
     case Number(n) => Set.empty
-    case a @ BinaryAExp(a1, op, a2) => Set(a) ++ aExpr(a1) ++ aExpr(a2)
+    case a @ BinaryAExp(a1, op, a2) => Set(a) ++ aExp(a1) ++ aExp(a2)
   }
 
-  def aExpr(b: BExp):Set[AExp] = b match {
+  def aExp(b: BExp):Set[AExp] = b match {
     case True => Set.empty
     case False => Set.empty
-    case Not(b) => aExpr(b)
+    case Not(b) => aExp(b)
     case BOpBExp(b1, bOp, b2) => Set.empty
-    case ROpBExp(a1, rOp, a2) => aExpr(a1) ++ aExpr(a2)
+    case ROpBExp(a1, rOp, a2) => aExp(a1) ++ aExp(a2)
   }
 
-  def aExpStar(s:Statement, upToBlock:Int):Set[AExp] = s match {
-      case Assignment(id, exp, l) if l <= upToBlock => aExpr(exp)
-      case Skip(l) if l <= upToBlock => Set.empty
-      case Composition(s1, s2) => aExpStar(s1, upToBlock) ++ aExpStar(s2, upToBlock)
-      case If(b, l, s1, s2) if l <= upToBlock => aExpr(b) ++ aExpStar(s1, upToBlock) ++ aExpStar(s2, upToBlock)
-      case While(cond, l, s) if l <= upToBlock => aExpr(cond) ++ aExpStar(s, upToBlock)
-      case _ => Set.empty
-    }
-
-  def aExpStar(s:Statement):Set[AExp] = aExpStar(s, blocks(s).size)
+  def aExpStar(s:Statement):Set[AExp] = s match {
+    case Assignment(id, exp, l) => aExp(exp)
+    case Skip(l) => Set.empty
+    case Composition(s1, s2) => aExpStar(s1) ++ aExpStar(s2)
+    case If(b, l, s1, s2) => aExp(b) ++ aExpStar(s1) ++ aExpStar(s2)
+    case While(cond, l, s) => aExp(cond) ++ aExpStar(s)
+  }
 
   def fv(aExp: AExp):Set[Ide] = aExp match {
     case i:Ide => Set(i)

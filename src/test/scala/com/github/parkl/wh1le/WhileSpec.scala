@@ -64,7 +64,7 @@ class WhileSpec extends FunSpec with Matchers {
         val fiveTimesX = BinaryAExp(5, "*", "x")
         val fiveTimesXMinusY = BinaryAExp(fiveTimesX, "-", "y")
         val exp1 = ROpBExp(fiveTimesXMinusY, "<", 5)
-        aExpr(exp1) should equal (
+        aExp(exp1) should equal (
           Set(BinaryAExp(5, "*", "x"), BinaryAExp(fiveTimesX, "-", "y"))
         )
       }
