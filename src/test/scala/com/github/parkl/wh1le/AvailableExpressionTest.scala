@@ -26,11 +26,13 @@ class AvailableExpressionTest extends FunSpec with Matchers {
     }
     it("should properly compute kill sets (ATTN weird!!)") {
       val ae = AvailableExpression(example)
-      ae.kill(1) should equal(Set.empty)
+//      ae.kill(1) should equal(Set.empty)
+      ae.kill(1) should equal(Set(aTimesX))
       ae.kill(2) should equal(Set.empty)
       ae.kill(3) should equal(Set.empty)
       ae.kill(4) should equal(Set(aPlusB, aTimesX, aPlus1))
-      ae.kill(5) should equal(Set.empty)
+//      ae.kill(5) should equal(Set.empty)
+      ae.kill(5) should equal(Set(aTimesX))
     }
     it("should properly compute gen sets") {
       val ae = AvailableExpression(example)
@@ -42,16 +44,14 @@ class AvailableExpressionTest extends FunSpec with Matchers {
     }
     it("should compute the solution using the algorithm") {
       val ae = AvailableExpression(example)
-      val solve: (scala.collection.mutable.HashMap[Int, Set[AExp]], scala.collection.mutable.HashMap[Int, Set[AExp]]) = ae.solve()
-      val AEIn = solve._1 // FIXME
-      val AEOut = solve._2
-      AEIn(1) should equal(Set.empty)
-      AEIn(2) should equal(aPlusB)
-//      AEIn(3) should equal(aPlusB)
-//      AEIn(4) should equal(aPlusB)
-//      AEIn(5) should equal(Set.empty)
-
-
+      val solve: (AvailableExpression#ResultMap, AvailableExpression#ResultMap) = ae.solve()
+      val AeIn = solve._1
+      val AeOut = solve._2
+      AeIn(1) should equal(Set.empty)
+      AeIn(2) should equal(aPlusB)
+      AeIn(3) should equal(aPlusB)
+      AeIn(4) should equal(aPlusB)
+      AeIn(5) should equal(Set.empty)
     }
   }
 }

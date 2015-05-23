@@ -30,29 +30,33 @@ class AvailableExpression(s:Statement) {
     case _ => Set.empty
   }
 
-  type EnterLeaveSet = scala.collection.mutable.Map[Int, Set[AExp]]
+  type ResultMap = Map[Int, Set[AExp]]
 
-  def solve() = {
-    var W = List[(Int, Int)]()
-    val AEEnter = scala.collection.mutable.HashMap.empty[Int, Set[AExp]]
-    val AELeave = scala.collection.mutable.HashMap.empty[Int, Set[AExp]]
+  def solve():(ResultMap, ResultMap) = {
+    var W = flow(s).toList
+    var enter:ResultMap = (for {
+      l <- labels(s)
+      v = if(l == init(s))
+            Set.empty[AExp]
+          else
+            aExpStar(s)
+    } yield(l -> v)).toMap
 
-    W = flow(s).toList
-    labels(s).foreach( l =>
-      if(l == init(s)) AEEnter += (l -> Set.empty)
-      else AEEnter += (l -> aExpStar(s))
-    )
+    var leave:ResultMap = Map.empty
 
     while(W.nonEmpty) {
-      val (l, lp) = W.head
+      val (l, ll) = W.head
       W = W.tail
-      AELeave += (l -> ((AEEnter(l) -- kill(l)) ++ gen(l)))
-      if(AEEnter(lp).subsetOf(AELeave(l))) {
-        AEEnter += (lp -> (AEEnter(l).intersect(AELeave(l))))
-        flow(s).filter(_._1 == lp).foreach(t => W = t :: W)
+      val lvl = (enter(l) -- kill(l)) ++ gen(l)
+      leave = leave + (l -> lvl)
+      if(enter(ll).subsetOf(lvl)) {
+        enter = enter + (ll -> (enter(ll) intersect lvl))
+        flow(s).filter(_._1 == ll).foreach{ p =>
+          W = p :: W
+        }
       }
     }
-    (AEEnter, AELeave)
+    (enter, leave)
   }
 
 }
