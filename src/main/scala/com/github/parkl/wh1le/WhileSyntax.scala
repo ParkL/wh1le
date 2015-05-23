@@ -1,7 +1,7 @@
 package com.github.parkl.wh1le
 
 object WhileSyntax {
-  type FlowMember = (Int, Int)
+  type FlowElement = (Int, Int)
   trait Block {
     val l:Int
   }
@@ -128,7 +128,7 @@ object WhileSyntax {
     case While(cond, l, s) => Set(l)
   }
 
-  def flow(s:Statement): Set[FlowMember] = s match {
+  def flow(s:Statement): Set[FlowElement] = s match {
     case Assignment(id, exp, l) => Set.empty
     case Skip(l) => Set.empty
     case Composition(s1, s2) =>
@@ -141,7 +141,7 @@ object WhileSyntax {
       } yield(lPrime, l))
   }
 
-  def flowR(s:Statement): Set[FlowMember] = flow(s).collect({case (l1, l2) => (l2, l1)})
+  def flowR(s:Statement): Set[FlowElement] = flow(s).collect({case (l1, l2) => (l2, l1)})
 
   def blocks(s:Statement): Set[Block] = s match {
     case a @ Assignment(id, exp, l) => Set(a)
