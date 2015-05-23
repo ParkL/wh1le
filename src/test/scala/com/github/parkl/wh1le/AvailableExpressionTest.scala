@@ -26,13 +26,13 @@ class AvailableExpressionTest extends FunSpec with Matchers {
     }
     it("should properly compute kill sets (ATTN weird!!)") {
       val ae = AvailableExpression(example)
-//      ae.kill(1) should equal(Set.empty)
-      ae.kill(1) should equal(Set(aTimesX))
+      ae.kill(1) should equal(Set.empty)
+      //ae.kill(1) should equal(Set(aTimesX))
       ae.kill(2) should equal(Set.empty)
       ae.kill(3) should equal(Set.empty)
       ae.kill(4) should equal(Set(aPlusB, aTimesX, aPlus1))
-//      ae.kill(5) should equal(Set.empty)
-      ae.kill(5) should equal(Set(aTimesX))
+      ae.kill(5) should equal(Set.empty)
+      //ae.kill(5) should equal(Set(aTimesX))
     }
     it("should properly compute gen sets") {
       val ae = AvailableExpression(example)
@@ -52,6 +52,12 @@ class AvailableExpressionTest extends FunSpec with Matchers {
       AeIn(3) should equal(aPlusB)
       AeIn(4) should equal(aPlusB)
       AeIn(5) should equal(Set.empty)
+
+      AeOut(1) should equal(Set(aPlusB))
+      AeOut(2) should equal(Set(aPlusB, aTimesX))
+      AeOut(3) should equal(Set(aPlusB))
+      AeOut(4) should equal(Set.empty)
+      AeOut(5) should equal(Set(aPlusB))
     }
   }
 }
