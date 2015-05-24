@@ -8,11 +8,11 @@ import org.scalatest.{Matchers, FunSpec}
 class AvailableExpressionTest extends FunSpec with Matchers {
   import WhileSyntax._
   val aPlusB = BinaryAExp("a", "+", "b")
-  val aTimesX = BinaryAExp("a", "*", "x")
+  val aTimesB = BinaryAExp("a", "*", "b")
   val aPlus1 = BinaryAExp("a", "+", 1)
   val example = List[Statement](
     Assignment("x", aPlusB, l = 1),
-    Assignment("y", aTimesX, l = 2),
+    Assignment("y", aTimesB, l = 2),
     While(ROpBExp("y", ">", aPlusB), 3, List[Statement](
       Assignment("a", aPlus1, 4),
       Assignment("x", aPlusB, 5)
@@ -22,22 +22,20 @@ class AvailableExpressionTest extends FunSpec with Matchers {
 
   describe("AvailableExpression analysis") {
     it("syntax should properly compute aExpStar") {
-      aExpStar(example) should equal (Set(aPlusB, aTimesX, aPlus1))
+      aExpStar(example) should equal (Set(aPlusB, aTimesB, aPlus1))
     }
     it("should properly compute kill sets (ATTN weird!!)") {
       val ae = AvailableExpression(example)
       ae.kill(1) should equal(Set.empty)
-      //ae.kill(1) should equal(Set(aTimesX))
       ae.kill(2) should equal(Set.empty)
       ae.kill(3) should equal(Set.empty)
-      ae.kill(4) should equal(Set(aPlusB, aTimesX, aPlus1))
+      ae.kill(4) should equal(Set(aPlusB, aTimesB, aPlus1))
       ae.kill(5) should equal(Set.empty)
-      //ae.kill(5) should equal(Set(aTimesX))
     }
     it("should properly compute gen sets") {
       val ae = AvailableExpression(example)
       ae.gen(1) should equal(Set(aPlusB))
-      ae.gen(2) should equal(Set(aTimesX))
+      ae.gen(2) should equal(Set(aTimesB))
       ae.gen(3) should equal(Set(aPlusB))
       ae.gen(4) should equal(Set.empty)
       ae.gen(5) should equal(Set(aPlusB))
@@ -54,7 +52,7 @@ class AvailableExpressionTest extends FunSpec with Matchers {
       AeIn(5) should equal(Set.empty)
 
       AeOut(1) should equal(Set(aPlusB))
-      AeOut(2) should equal(Set(aPlusB, aTimesX))
+      AeOut(2) should equal(Set(aPlusB, aTimesB))
       AeOut(3) should equal(Set(aPlusB))
       AeOut(4) should equal(Set.empty)
       AeOut(5) should equal(Set(aPlusB))
