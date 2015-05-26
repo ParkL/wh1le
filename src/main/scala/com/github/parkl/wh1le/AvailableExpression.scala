@@ -33,6 +33,12 @@ class AvailableExpression(s:Statement) {
   type ResultMap = Map[Int, Set[AExp]]
 
   def solve():(ResultMap, ResultMap, List[String]) = {
+    def render(m:ResultMap):String =
+      m.toList
+        .sortBy(_._1)
+        .map({case (k, v) => s"$k -> $v"})
+        .foldLeft("")({case (m, e) => s"$m\n$e \\\\"})
+
     var log = List.empty[String]
     var W = flow(s).toList.sortBy(_._1)
     var after:ResultMap = (for{
@@ -49,8 +55,8 @@ class AvailableExpression(s:Statement) {
     while(W.nonEmpty) {
       val (l, ll) = W.head
       W = W.tail
-      log = (s"Current: ${(l,ll)}") :: log
-      log = s"Worklist: $W" :: log
+      log = (s"Current: ${(l,ll)} :: ${W} \\\\") :: log
+      // log = s"Worklist: $W" :: log
       val lvl = (before(l) -- kill(l)) union gen(l) // AEBullet(l)
       after = after + (l -> lvl)
       if(!before(ll).subsetOf(lvl)) {
@@ -59,7 +65,8 @@ class AvailableExpression(s:Statement) {
           W = p :: W
         }
       }
-      log = before.toString :: log
+      log = s"Before list: \\\\ ${render(before)} \\" :: log
+      log = s"After list: \\\\  ${render(after)} \\" :: log
     }
     (before, after, log.reverse)
   }
