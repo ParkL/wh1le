@@ -1,13 +1,11 @@
 package com.github.parkl.wh1le
 
-import com.github.parkl.wh1le.AvailableExpression
-import org.scalatest.{Matchers, FunSpec}
+import org.scalatest.{FunSpec, Matchers}
 
 /**
   * Created by bernd on 5/21/15.
  */
 class Graded1 extends FunSpec with Matchers {
-  import com.github.parkl.wh1le.AvailableExpression
   import com.github.parkl.wh1le.WhileSyntax._
 
   def assProg:List[Statement] = {
@@ -48,14 +46,15 @@ class Graded1 extends FunSpec with Matchers {
     it("should have 6 blocks") {
       blocks(assProg).map(_.l) should equal ((1 to 6).toSet)
     }
-//    it("Available expression kill list should be") {
+//    it("doit display stuff") {
+//      println(assProg)
 //      val ae = AvailableExpression(assProg)
-//      for {
-//        i <- 1 to blocks(assProg).size
-//
-//      }
+//      val aes = aExpStar(assProg)
+//      // for(i <- 1 to 6) println(s"kill($i): ${ae.kill(i)}\ngen($i): ${ae.gen(i)}")
+//      val solve: (AvailableExpression#ResultMap, AvailableExpression#ResultMap, List[String]) = ae.solve()
+//      for(x <- solve._3) println(x)
+//      // for(i <- 1 to 6) println(s"AEEnter($i): ${result._1(i)}.")
+//      // for(i <- 1 to 6) println(s"AELeave($i): ${result._2(i)}.")
 //    }
-
   }
-
 }

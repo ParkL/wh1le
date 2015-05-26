@@ -32,9 +32,13 @@ class AvailableExpression(s:Statement) {
 
   type ResultMap = Map[Int, Set[AExp]]
 
-  def solve():(ResultMap, ResultMap) = {
-    var W = flow(s).toList
-    var enter:ResultMap = (for {
+  def solve():(ResultMap, ResultMap, List[String]) = {
+    var log = List.empty[String]
+    var W = flow(s).toList.sortBy(_._1)
+    var after:ResultMap = (for{
+      l <- labels(s)
+    } yield (l -> Set.empty[AExp])).toMap
+    var before:ResultMap = (for {
       l <- labels(s)
       v = if(l == init(s))
             Set.empty[AExp]
@@ -42,21 +46,22 @@ class AvailableExpression(s:Statement) {
             aExpStar(s)
     } yield(l -> v)).toMap
 
-    var leave:ResultMap = Map.empty
-
     while(W.nonEmpty) {
       val (l, ll) = W.head
       W = W.tail
-      val lvl = (enter(l) -- kill(l)) ++ gen(l)
-      leave = leave + (l -> lvl)
-      if(enter(ll).subsetOf(lvl)) {
-        enter = enter + (ll -> (enter(ll) intersect lvl))
+      log = (s"Current: ${(l,ll)}") :: log
+      log = s"Worklist: $W" :: log
+      val lvl = (before(l) -- kill(l)) union gen(l) // AEBullet(l)
+      after = after + (l -> lvl)
+      if(!before(ll).subsetOf(lvl)) {
+        before = before + (ll -> (before(ll) intersect lvl))
         flow(s).filter(_._1 == ll).foreach{ p =>
           W = p :: W
         }
       }
+      log = before.toString :: log
     }
-    (enter, leave)
+    (before, after, log.reverse)
   }
 
 }
