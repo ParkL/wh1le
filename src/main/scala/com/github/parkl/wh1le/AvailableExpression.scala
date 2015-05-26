@@ -56,7 +56,6 @@ class AvailableExpression(s:Statement) {
       val (l, ll) = W.head
       W = W.tail
       log = (s"Current: ${(l,ll)} :: ${W} \\\\") :: log
-      // log = s"Worklist: $W" :: log
       val lvl = (before(l) -- kill(l)) union gen(l) // AEBullet(l)
       after = after + (l -> lvl)
       if(!before(ll).subsetOf(lvl)) {
