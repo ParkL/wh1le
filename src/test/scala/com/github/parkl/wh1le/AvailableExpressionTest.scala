@@ -42,7 +42,7 @@ class AvailableExpressionTest extends FunSpec with Matchers {
     }
     it("should compute the solution using the algorithm") {
       val ae = AvailableExpression(example)
-      val solve: (AvailableExpression#ResultMap, AvailableExpression#ResultMap, List[String]) = ae.solve()
+      val solve: (AvailableExpression#ResultMap, AvailableExpression#ResultMap) = ae.solve()
       val AeIn = solve._1
       val AeOut = solve._2
       AeIn(1) should equal(Set.empty)

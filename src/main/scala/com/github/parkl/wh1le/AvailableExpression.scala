@@ -31,15 +31,14 @@ class AvailableExpression(s:Statement) {
   }
 
   type ResultMap = Map[Int, Set[AExp]]
+  type Logger = ( FlowElement, // Current
+                  List[FlowElement], // Worklist,
+                  ResultMap, // Enter
+                  ResultMap) // Leave
+              => Unit
+  val emptyLogger: (Logger) = (_,_,_,_) => {}
 
-  def solve():(ResultMap, ResultMap, List[String]) = {
-    def render(m:ResultMap):String =
-      m.toList
-        .sortBy(_._1)
-        .map({case (k, v) => s"$k -> $v"})
-        .foldLeft("")({case (m, e) => s"$m\n$e \\\\"})
-
-    var log = List.empty[String]
+  def solve(logger:Logger = emptyLogger):(ResultMap, ResultMap) = {
     var W = flow(s).toList.sortBy(_._1)
     var after:ResultMap = (for{
       l <- labels(s)
@@ -55,7 +54,6 @@ class AvailableExpression(s:Statement) {
     while(W.nonEmpty) {
       val (l, ll) = W.head
       W = W.tail
-      log = (s"Current: ${(l,ll)} :: ${W} \\\\") :: log
       val lvl = (before(l) -- kill(l)) union gen(l) // AEBullet(l)
       after = after + (l -> lvl)
       if(!before(ll).subsetOf(lvl)) {
@@ -64,10 +62,8 @@ class AvailableExpression(s:Statement) {
           W = p :: W
         }
       }
-      log = s"Before list: \\\\ ${render(before)} \\" :: log
-      log = s"After list: \\\\  ${render(after)} \\" :: log
+      logger((l,ll), W, before, after)
     }
-    (before, after, log.reverse)
+    (before, after)
   }
-
 }
