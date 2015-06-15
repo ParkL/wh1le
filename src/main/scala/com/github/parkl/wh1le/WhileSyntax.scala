@@ -1,5 +1,4 @@
 package com.github.parkl.wh1le
-
 object WhileSyntax {
   type FlowElement = (Int, Int)
   trait Block {
