@@ -187,5 +187,6 @@ object WhileSyntax {
     case Not(b) => fv(b)
     case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
+
 }
 

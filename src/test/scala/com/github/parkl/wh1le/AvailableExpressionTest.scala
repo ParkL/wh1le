@@ -24,7 +24,7 @@ class AvailableExpressionTest extends FunSpec with Matchers {
     it("syntax should properly compute aExpStar") {
       aExpStar(example) should equal (Set(aPlusB, aTimesB, aPlus1))
     }
-    it("should properly compute kill sets (ATTN weird!!)") {
+    it("should properly compute kill") {
       val ae = AvailableExpression(example)
       ae.kill(1) should equal(Set.empty)
       ae.kill(2) should equal(Set.empty)
@@ -41,21 +41,18 @@ class AvailableExpressionTest extends FunSpec with Matchers {
       ae.gen(5) should equal(Set(aPlusB))
     }
     it("should compute the solution using the algorithm") {
-      val ae = AvailableExpression(example)
-      val solve: (AvailableExpression#ResultMap, AvailableExpression#ResultMap) = ae.solve()
-      val AeIn = solve._1
-      val AeOut = solve._2
-      AeIn(1) should equal(Set.empty)
-      AeIn(2) should equal(Set(aPlusB))
-      AeIn(3) should equal(Set(aPlusB))
-      AeIn(4) should equal(Set(aPlusB))
-      AeIn(5) should equal(Set.empty)
+      val (entry, exit) = AvailableExpression(example).solve()
+      entry(1) should equal(Set.empty)
+      entry(2) should equal(Set(aPlusB))
+      entry(3) should equal(Set(aPlusB))
+      entry(4) should equal(Set(aPlusB))
+      entry(5) should equal(Set.empty)
 
-      AeOut(1) should equal(Set(aPlusB))
-      AeOut(2) should equal(Set(aPlusB, aTimesB))
-      AeOut(3) should equal(Set(aPlusB))
-      AeOut(4) should equal(Set.empty)
-      AeOut(5) should equal(Set(aPlusB))
+      exit(1) should equal(Set(aPlusB))
+      exit(2) should equal(Set(aPlusB, aTimesB))
+      exit(3) should equal(Set(aPlusB))
+      exit(4) should equal(Set.empty)
+      exit(5) should equal(Set(aPlusB))
     }
   }
 }
