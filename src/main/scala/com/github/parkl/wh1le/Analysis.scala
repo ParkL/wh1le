@@ -133,10 +133,10 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
   override type L = AExp
 
   override def kill(i: Int): Set[L] = bx(i).get match {
-    case Assignment(id, exp, l) => for(
+    case Assignment(id, exp, l) => for {
       aP <- aExpStar(s)
-      if(fv(aP).contains(id))
-    ) yield aP
+      if (fv(aP).contains(id))
+    } yield aP
     case Skip(l) => Set.empty
     case If(b, l, s1, s2) => Set.empty
     case While(cond, l, s) => Set.empty
@@ -151,7 +151,7 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
   }
 
   override def bottom: Set[L] = aExpStar(s)
-  override def cup: (Set[L], Set[L]) => Set[L] = (s1, s2) => s1 intersect s2
+  override def cup: (Set[L], Set[L]) => Set[L] = intersect
   override def subSomething: (Set[L], Set[L]) => Boolean = subsetRight
   override def F: Set[(Int, Int)] = flowR(s)
   override def i: Set[L] = Set.empty

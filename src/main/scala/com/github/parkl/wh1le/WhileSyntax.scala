@@ -80,7 +80,7 @@ object WhileSyntax {
 
 
   sealed abstract trait Statement
-  case class Assignment(id:String, exp:AExp, l:Int) extends Statement with Block {
+  case class Assignment(id:Ide, exp:AExp, l:Int) extends Statement with Block {
     override def toString() = s"[$id := $exp]^$l"
   }
   case class Skip(l:Int) extends Statement with Block {
@@ -187,6 +187,5 @@ object WhileSyntax {
     case Not(b) => fv(b)
     case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
-
 }
 
