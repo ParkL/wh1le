@@ -123,3 +123,35 @@ class LiveVariables(s:Statement) extends Analysis(s) {
   override def subSomething: (Set[L], Set[L]) => Boolean = subsetLeft
 }
 
+object VeryBusyExpression {
+  def apply(s:Statement) = new VeryBusyExpression(s)
+}
+
+class VeryBusyExpression(s:Statement) extends Analysis(s) {
+  override type L = AExp
+
+  override def kill(i: Int): Set[L] = bx(i).get match {
+    case Assignment(id, exp, l) => for(
+      aP <- aExpStar(s)
+      if(fv(aP).contains(id))
+    ) yield aP
+    case Skip(l) => Set.empty
+    case If(b, l, s1, s2) => Set.empty
+    case While(cond, l, s) => Set.empty
+    case _ => ???
+  }
+  override def gen(i: Int): Set[L] = bx(i).get match {
+    case Assignment(id, exp, l) => aExp(exp)
+    case Skip(l) => Set.empty
+    case If(b, l, s1, s2) => aExp(b)
+    case While(cond, l, s) => aExp(cond)
+    case _ => ???
+  }
+
+  override def bottom: Set[L] = aExpStar(s)
+  override def cup: (Set[L], Set[L]) => Set[L] = (s1, s2) => s1 intersect s2
+  override def subSomething: (Set[L], Set[L]) => Boolean = subsetRight
+  override def F: Set[(Int, Int)] = flowR(s)
+  override def i: Set[L] = Set.empty
+  override def E: Set[Int] = f1nal(s)
+}
