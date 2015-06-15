@@ -39,6 +39,8 @@ abstract class Analysis(s:Statement) { self =>
   protected val bx = block(s)_
   def subsetLeft(s1: Set[L], s2: Set[L]) = s1 subsetOf s2
   def subsetRight(s1: Set[L], s2: Set[L]) = s2 subsetOf s1
+  def union(s1: Set[L], s2:Set[L]) = s1 union s2
+  def intersect(s1: Set[L], s2:Set[L]) = s1 intersect s2
 
   def solve(logger:Logger = emptyLogger):(ResultMap, ResultMap) = {
     def flA(A: ResultMap) = A collect { case (l, v) => l -> fl(A, l) }
@@ -89,7 +91,7 @@ class AvailableExpression(s: Statement) extends Analysis(s) {
   def i: Set[L] = Set.empty[L]
   def bottom: Set[L] = aExpStar(s)
   def subSomething: (Set[L], Set[L]) => Boolean = subsetRight
-  def cup: (Set[L], Set[L]) => Set[L] = (s1, s2) => s1 intersect s2
+  def cup: (Set[L], Set[L]) => Set[L] = intersect
 }
 
 object LiveVariables {
@@ -116,7 +118,7 @@ class LiveVariables(s:Statement) extends Analysis(s) {
   }
 
   override def bottom: Set[L] = Set.empty[L]
-  override def cup: (Set[L], Set[L]) => Set[L] = (s1, s2) => s1 union s2
+  override def cup: (Set[L], Set[L]) => Set[L] = union
   override def F: Set[(Int, Int)] = flowR(s)
   override def i: Set[L] = Set.empty[L]
   override def E: Set[Int] = f1nal(s)
