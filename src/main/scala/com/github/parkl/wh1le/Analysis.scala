@@ -12,7 +12,7 @@ abstract class Analysis(s:Statement) { self =>
   def E: Set[Int]
   def i: Set[L]
   def bottom: Set[L]
-  def subSomething: (Set[L], Set[L]) => Boolean
+  def <= : (Set[L], Set[L]) => Boolean
   def cup: (Set[L], Set[L]) => Set[L]
 
   def gen(i:Int):Set[L]
@@ -23,9 +23,9 @@ abstract class Analysis(s:Statement) { self =>
   implicit class CupProvider(s1: Set[L]) {
     def cup(s2: Set[L]) = self.cup(s1, s2)
   }
-  
+
   implicit class NotSubSomethingProvider(s1: Set[L]) {
-    def subSomething(s2: Set[L]) = self.subSomething(s1, s2)
+    def <=(s2: Set[L]) = self.<=(s1, s2)
   }
 
   type ResultMap = Map[Int, Set[L]]
@@ -52,7 +52,7 @@ abstract class Analysis(s:Statement) { self =>
     while(W.nonEmpty) {
       val ((l, ll) :: ws) = W
       W = ws
-      if(! (fl(A, l) subSomething A(ll))) {
+      if(! (fl(A, l) <= A(ll))) {
         A = A + (ll -> (A(ll) cup fl(A, l)))
         F.filter(_._1 == ll).foreach{ p => W = p :: W }
       }
@@ -90,7 +90,7 @@ class AvailableExpression(s: Statement) extends Analysis(s) {
   override def E: Set[Int] = Set(init(s))
   override def i: Set[L] = Set.empty[L]
   override def bottom: Set[L] = aExpStar(s)
-  override def subSomething: (Set[L], Set[L]) => Boolean = subsetRight
+  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
   override def cup: (Set[L], Set[L]) => Set[L] = intersect
 }
 
@@ -120,7 +120,7 @@ class LiveVariables(s:Statement) extends Analysis(s) {
   override def F: Set[FlowElement] = flowR(s)
   override def i: Set[L] = Set.empty[L]
   override def E: Set[Int] = f1nal(s)
-  override def subSomething: (Set[L], Set[L]) => Boolean = subsetLeft
+  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft
 }
 
 object VeryBusyExpression {
@@ -148,7 +148,7 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
 
   override def bottom: Set[L] = aExpStar(s)
   override def cup: (Set[L], Set[L]) => Set[L] = intersect
-  override def subSomething: (Set[L], Set[L]) => Boolean = subsetRight
+  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
   override def F: Set[FlowElement] = flowR(s)
   override def i: Set[L] = Set.empty
   override def E: Set[Int] = f1nal(s)
