@@ -1,4 +1,6 @@
 package com.github.parkl.wh1le
+import language.implicitConversions
+
 object WhileSyntax {
   type FlowElement = (Int, Int)
   sealed trait Block {
