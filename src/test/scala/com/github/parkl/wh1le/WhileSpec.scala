@@ -17,6 +17,34 @@ class WhileSpec extends FunSpec with Matchers {
     )
   ))
 
+  val sheet9ExplicitLabels = program(List[Statement](
+    Assignment("y", 0, Some(1)),
+    If(ROpBExp("x", ">", 2),
+      Assignment("x", "x", Some(3)), // ATTN actually is -x
+      Assignment("x", BinaryAExp(2, "*", "x"), Some(4))
+      , Some(2)),
+    While(ROpBExp("x", ">", 0),
+      List[Statement](
+        Assignment("z", BinaryAExp("z", "-", 1), Some(6)),
+        Assignment("x", BinaryAExp("x", "+", "z"), Some(7))
+      ), Some(5)),
+    Assignment("a", "x", Some(8))
+  ))
+
+  val sheet9 = assignLabels(List[Statement](
+    Assignment("y", 0),
+    If(ROpBExp("x", ">", 2),
+      Assignment("x", "x"), // ATTN actually is -x
+      Assignment("x", BinaryAExp(2, "*", "x"))),
+    While(ROpBExp("x", ">", 0),
+      List[Statement](
+        Assignment("z", BinaryAExp("z", "-", 1)),
+        Assignment("x", BinaryAExp("x", "+", "z"))
+      )),
+    Assignment("a", "x"))
+  )
+
+
   describe("Syntax") {
     describe("AExp") {
       it("should support implicit conversion of AOps") {
@@ -34,6 +62,9 @@ class WhileSpec extends FunSpec with Matchers {
           s should equal(expected)
         }
         _test(myProgram)
+      }
+      it("should automatically assign labels correctly") {
+        sheet9ExplicitLabels should equal(sheet9)
       }
     }
     describe("Functions") {

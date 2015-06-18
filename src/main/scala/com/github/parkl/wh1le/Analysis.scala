@@ -153,6 +153,30 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
   override def i: Set[L] = Set.empty
   override def E: Set[Int] = f1nal(s)
 }
+
+object Dominator {
+  def apply(s:Statement) = new Dominator(s)
+}
+class Dominator(s:Statement) extends Analysis(s) {
+  override type L = Int // label
+
+  override def gen(i: Int): Set[L] = bx(i).get match {
+    case Assignment(id, exp, Some(l)) => Set(l)
+    case Skip(l) => Set.empty
+    case If(b, s1, s2, l) => Set.empty
+    case While(cond, s, l) => Set.empty
+    case _ => ???
+  }
+  override def kill(i: Int): Set[L] = Set.empty
+
+  override def bottom: Set[L] = Set.empty
+  override def cup: (Set[L], Set[L]) => Set[L] = intersect
+  override def F: Set[(Int, Int)] = flow(s)
+  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft // ???
+  override def i: Set[L] = Set.empty
+  override def E: Set[Int] = Set(init(s))
+}
+
 //class ReachingDefinition(s:Statement) extends Analysis(s) {
 //  override type L = (Ide, Int)
 //
