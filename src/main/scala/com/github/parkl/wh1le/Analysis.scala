@@ -81,8 +81,8 @@ class AvailableExpression(s: Statement) extends Analysis(s) {
       if !(fv(aPrime).contains(id))
     } yield aPrime
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => aExp(b)
-    case While(cond, l, s) => aExp(cond)
+    case If(b, s1, s2, _) => aExp(b)
+    case While(cond, s, _) => aExp(cond)
     case _ => Set.empty
   }
 
@@ -104,15 +104,15 @@ class LiveVariables(s:Statement) extends Analysis(s) {
   override def kill(i: Int):Set[L] = bx(i).get match {
     case Assignment(id, exp, l) => Set(id)
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => Set.empty
-    case While(cond, l, s) => Set.empty
+    case If(b, s1, s2, _) => Set.empty
+    case While(cond, s, _) => Set.empty
   }
 
   override def gen(i: Int): Set[L] = bx(i).get match {
     case Assignment(id, exp, l) => fv(exp)
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => fv(b)
-    case While(cond, l, s) => fv(cond)
+    case If(b, s1, s2, _) => fv(b)
+    case While(cond, s, _) => fv(cond)
   }
 
   override def bottom: Set[L] = Set.empty[L]
@@ -136,14 +136,14 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
       if (fv(aP).contains(id))
     } yield aP
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => Set.empty
-    case While(cond, l, s) => Set.empty
+    case If(b, s1, s2, _) => Set.empty
+    case While(cond, s, _) => Set.empty
   }
   override def gen(i: Int): Set[L] = bx(i).get match {
     case Assignment(id, exp, l) => aExp(exp)
     case Skip(l) => Set.empty
-    case If(b, l, s1, s2) => aExp(b)
-    case While(cond, l, s) => aExp(cond)
+    case If(b, s1, s2, _) => aExp(b)
+    case While(cond, s, _) => aExp(cond)
   }
 
   override def bottom: Set[L] = aExpStar(s)
