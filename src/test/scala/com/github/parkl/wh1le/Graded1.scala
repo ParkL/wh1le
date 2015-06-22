@@ -8,7 +8,7 @@ import org.scalatest.{FunSpec, Matchers}
 class Graded1 extends FunSpec with Matchers {
   import com.github.parkl.wh1le.WhileSyntax._
 
-  def assProg:List[Statement] = {
+  def assProg:Statement = {
     val fiveTimesX = BinaryAExp(5, "*", "x")
     val fiveTimesXMinusY = BinaryAExp(fiveTimesX, "-", "y")
     val exp1 = ROpBExp(fiveTimesXMinusY, "<", 5)
@@ -28,13 +28,13 @@ class Graded1 extends FunSpec with Matchers {
 
     val exp6 = BinaryAExp(fiveTimesX, "+", yPlus4)
 
-    List[Statement](
-      If(exp1, l = 1,
-        Assignment("z", exp2, l = 2),
-        Assignment("z", exp3, l = 3)),
-      While(exp4, l = 4, Assignment("y", exp5, l = 5)),
-      Assignment("z", exp6, l = 6)
-    )
+    assignLabels(List[Statement](
+      If(exp1,
+        Assignment("z", exp2),
+        Assignment("z", exp3)),
+      While(exp4, Assignment("y", exp5)),
+      Assignment("z", exp6)
+    ))
   }
 
   describe("Graded1 program") {
@@ -44,7 +44,7 @@ class Graded1 extends FunSpec with Matchers {
       )
     }
     it("should have 6 blocks") {
-      blocks(assProg).map(_.l) should equal ((1 to 6).toSet)
+      blocks(assProg).map(_.l) should equal ((1 to 6).map(Some(_)).toSet)
     }
 //    it("doit display stuff") {
 //      println(assProg)

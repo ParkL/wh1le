@@ -7,16 +7,15 @@ import org.scalatest.{Matchers, FunSpec}
  */
 class WhileSpec extends FunSpec with Matchers {
   import WhileSyntax._
-  val prog1:List[Statement] = List(
-    Assignment("z", 1, 1),
+  val prog1:Statement = assignLabels(List[Statement](
+    Assignment("z", 1),
     While(
-      ROpBExp("x", Gt, 0), 2, Composition(
-        Assignment("z", BinaryAExp("z", "*", "y"), 3),
-        Assignment("x", BinaryAExp("x", "-", "1"), 4)
+      ROpBExp("x", Gt, 0), Composition(
+        Assignment("z", BinaryAExp("z", "*", "y")),
+        Assignment("x", BinaryAExp("x", "-", "1"))
       )
     )
-  )
-
+  ))
 
   describe("Syntax") {
     describe("AExp") {
@@ -26,10 +25,10 @@ class WhileSpec extends FunSpec with Matchers {
     }
     describe("Statements") {
       it("should support implicit conversions from lists of statements to composition") {
-        val ass1: Statement = Assignment("x", 2, 1)
-        val ass2: Statement = Assignment("y", 3, 3)
-        val myProgram: List[Statement] = List(ass1, Skip(2), ass2)
-        val expected: Composition = Composition(ass1, Composition(Skip(2), ass2))
+        val ass1: Statement = Assignment("x", 2, Some(1))
+        val ass2: Statement = Assignment("y", 3, Some(3))
+        val myProgram: List[Statement] = List(ass1, Skip(Some(2)), ass2)
+        val expected: Composition = Composition(ass1, Composition(Skip(Some(2)), ass2))
         program(myProgram) should equal(expected)
         def _test(s:Statement): Unit = {
           s should equal(expected)
@@ -40,6 +39,7 @@ class WhileSpec extends FunSpec with Matchers {
     describe("Functions") {
       it("should find labels properly") {
         labels(prog1) should equal(Set(1,2,3,4))
+
       }
       it("should find init(S) properly") {
         init(prog1) should equal(1)
@@ -58,7 +58,8 @@ class WhileSpec extends FunSpec with Matchers {
         )
       }
       it("should properly compute blocks") {
-        blocks(prog1).map(_.l) should equal(Set(1,2,3,4))
+        import language.postfixOps
+        blocks(prog1).map(_.l) should equal((1 to 4) map (Some(_)) toSet)
       }
       it("should properly compute available expressions") {
         val fiveTimesX = BinaryAExp(5, "*", "x")

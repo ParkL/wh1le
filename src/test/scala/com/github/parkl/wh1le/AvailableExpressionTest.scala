@@ -10,14 +10,14 @@ class AvailableExpressionTest extends FunSpec with Matchers {
   val aPlusB = BinaryAExp("a", "+", "b")
   val aTimesB = BinaryAExp("a", "*", "b")
   val aPlus1 = BinaryAExp("a", "+", 1)
-  val example = List[Statement](
-    Assignment("x", aPlusB, l = 1),
-    Assignment("y", aTimesB, l = 2),
-    While(ROpBExp("y", ">", aPlusB), 3, List[Statement](
-      Assignment("a", aPlus1, 4),
-      Assignment("x", aPlusB, 5)
+  val example = assignLabels(List[Statement](
+    Assignment("x", aPlusB),
+    Assignment("y", aTimesB),
+    While(ROpBExp("y", ">", aPlusB), List[Statement](
+      Assignment("a", aPlus1),
+      Assignment("x", aPlusB)
       )
-    )
+    ))
   )
 
   describe("AvailableExpression analysis") {

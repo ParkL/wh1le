@@ -9,18 +9,18 @@ class VeryBusyExpressionsTest extends FunSpec with Matchers {
 
   private val aMinusB: BinaryAExp = BinaryAExp("a", "-", "b")
   private val bMinusA: BinaryAExp = BinaryAExp("b", "-", "a")
-  val example = List[Statement](
-    If(ROpBExp("a", ">", "b"), 1,
+  val example = assignLabels(List[Statement](
+    If(ROpBExp("a", ">", "b"),
       List[Statement](
-        Assignment("x", bMinusA, 2),
-        Assignment("y", aMinusB, 3)
+        Assignment("x", bMinusA),
+        Assignment("y", aMinusB)
       ),
       List[Statement](
-        Assignment("y", bMinusA, 4),
-        Assignment("x", aMinusB, 5)
+        Assignment("y", bMinusA),
+        Assignment("x", aMinusB)
       )
     )
-  )
+  ))
 
   describe("Very Busy Expression Analysis") {
     it("should generate kill set properly") {

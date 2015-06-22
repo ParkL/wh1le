@@ -4,7 +4,7 @@ import language.implicitConversions
 object WhileSyntax {
   type FlowElement = (Int, Int)
   sealed trait Block {
-    val l:Int
+    val l:Option[Int]
   }
 
   sealed abstract trait AOp
@@ -82,19 +82,19 @@ object WhileSyntax {
 
 
   sealed abstract trait Statement
-  case class Assignment(id:Ide, exp:AExp, l:Int) extends Statement with Block {
+  case class Assignment(id:Ide, exp:AExp, l:Option[Int] = None) extends Statement with Block {
     override def toString() = s"[$id := $exp]^$l"
   }
-  case class Skip(l:Int) extends Statement with Block {
+  case class Skip(l: Option[Int] = None) extends Statement with Block {
     override def toString() = s"[skip]^$l"
   }
   case class Composition(s1: Statement, s2:Statement) extends Statement {
     override def toString() = s"$s1 ; $s2"
   }
-  case class If(b: BExp, l: Int, s1: Statement, s2: Statement) extends Statement with Block {
+  case class If(b: BExp, s1: Statement, s2: Statement, l: Option[Int] = None) extends Statement with Block {
     override def toString() = s"if [$b]^$l then $s1 else $s2"
   }
-  case class While(cond: BExp, l:Int, s: Statement) extends Statement with Block {
+  case class While(cond: BExp, s: Statement, l: Option[Int] = None) extends Statement with Block {
     override def toString() = s"while [$cond]^$l do $s od"
   }
 
@@ -106,53 +106,58 @@ object WhileSyntax {
   }
 
   def labels(s: Statement): Set[Int] = s match {
-    case Assignment(id, exp, l) => Set(l)
-    case Skip(l) => Set(l)
+    case Assignment(id, exp, Some(l)) => Set(l)
+    case Skip(Some(l)) => Set(l)
     case Composition(s1, s2) => labels(s1) ++ labels(s2)
-    case If(i, l, t, e) => Set(l) ++ labels(t) ++ labels(e)
-    case While(cond, l, s) => Set(l) ++ labels(s)
+    case If(i, t, e, Some(l)) => Set(l) ++ labels(t) ++ labels(e)
+    case While(cond, s, Some(l)) => Set(l) ++ labels(s)
+    case _ => ???
   }
 
   def init(s:Statement): Int = s match {
-    case Assignment(id, exp, l) => l
-    case Skip(l) => l
+    case Assignment(id, exp, Some(l)) => l
+    case Skip(Some(l)) => l
     case Composition(s1, s2) => init(s1)
-    case If(i, l, t, e) => l
-    case While(cond, l, s) => l
+    case If(i, t, e, Some(l)) => l
+    case While(cond, s, Some(l)) => l
+    case _ => ???
   }
 
   def f1nal(s:Statement): Set[Int] = s match {
-    case Assignment(id, exp, l) => Set(l)
-    case Skip(l) => Set(l)
+    case Assignment(id, exp, Some(l)) => Set(l)
+    case Skip(Some(l)) => Set(l)
     case Composition(s1, s2) => f1nal(s2)
-    case If(i, l, t, e) => f1nal(t) ++ f1nal(e)
-    case While(cond, l, s) => Set(l)
+    case If(i, t, e, Some(l)) => f1nal(t) ++ f1nal(e)
+    case While(cond, s, Some(l)) => Set(l)
+    case _ => ???
   }
 
   def flow(s:Statement): Set[FlowElement] = s match {
-    case Assignment(id, exp, l) => Set.empty
-    case Skip(l) => Set.empty
+    case Assignment(id, exp, Some(l)) => Set.empty
+    case Skip(Some(l)) => Set.empty
     case Composition(s1, s2) =>
       flow(s1) ++ flow(s2) ++ (for {
         l <- f1nal(s1)
       } yield (l, init(s2)))
-    case If(b, l, s1, s2) => flow(s1) ++ flow(s2) ++ Set((l, init(s1)), (l, init(s2)))
-    case While(cond, l, s) => Set((l, init(s))) ++ flow(s) ++ (for {
+    case If(b, s1, s2, Some(l)) => flow(s1) ++ flow(s2) ++ Set((l, init(s1)), (l, init(s2)))
+    case While(cond, s, Some(l)) => Set((l, init(s))) ++ flow(s) ++ (for {
         lPrime <- f1nal(s)
       } yield(lPrime, l))
+    case _ => ???
   }
 
   def flowR(s:Statement): Set[FlowElement] = flow(s).collect({case (l1, l2) => (l2, l1)})
 
   def blocks(s:Statement): Set[Block] = s match {
-    case a @ Assignment(id, exp, l) => Set(a)
-    case s @ Skip(l) => Set(s)
+    case a @ Assignment(id, exp, Some(l)) => Set(a)
+    case s @ Skip(Some(l)) => Set(s)
     case Composition(s1, s2) => blocks(s1) ++ blocks(s2)
-    case i @ If(b, l, s1, s2) => Set(i) ++ blocks(s1) ++ blocks(s2)
-    case w @ While(cond, l, s) => Set(w) ++ blocks(s)
+    case i @ If(b, s1, s2, Some(l)) => Set(i) ++ blocks(s1) ++ blocks(s2)
+    case w @ While(cond, s, Some(l)) => Set(w) ++ blocks(s)
+    case _ => ???
   }
 
-  def block(s:Statement)(l:Int):Option[Block] = blocks(s).find(_.l == l)
+  def block(s:Statement)(l:Int):Option[Block] = blocks(s).find(_.l == Some(l))
 
   def aExp(a: AExp):Set[AExp] = a match {
     case Ide(x) => Set.empty
@@ -172,8 +177,8 @@ object WhileSyntax {
     case Assignment(id, exp, l) => aExp(exp)
     case Skip(l) => Set.empty
     case Composition(s1, s2) => aExpStar(s1) ++ aExpStar(s2)
-    case If(b, l, s1, s2) => aExp(b) ++ aExpStar(s1) ++ aExpStar(s2)
-    case While(cond, l, s) => aExp(cond) ++ aExpStar(s)
+    case If(b, s1, s2, _) => aExp(b) ++ aExpStar(s1) ++ aExpStar(s2)
+    case While(cond, s, _) => aExp(cond) ++ aExpStar(s)
   }
 
   def fv(aExp: AExp):Set[Ide] = aExp match {
@@ -189,5 +194,32 @@ object WhileSyntax {
     case Not(b) => fv(b)
     case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
+
+  def assignLabels(s:Statement):Statement = {
+    def al(s:Statement, i:Int = 1):(Statement, Int) = s match {
+      case a @ Assignment(id, exp, None) => (a.copy(l = Some(i)), i + 1)
+      case s @ Skip(None) => (s.copy(l = Some(i)), i + 1)
+      case c @ Composition(s1, s2) => {
+        val (s1WithLabel, j) = al(s1, i)
+        val (s2WithLabel, k) = al(s2, j)
+        (c.copy(s1 = s1WithLabel, s2 = s2WithLabel), k)
+      }
+      case c @ If(b, s1, s2, None) => {
+        val ifI = i
+        val (s1WithLabel, j) = al(s1, ifI + 1)
+        val (s2WithLabel, k) = al(s2, j)
+        (c.copy(l = Some(ifI), s1 = s1WithLabel, s2 = s2WithLabel), k)
+      }
+      case w @ While(cond, s, None) => {
+        val whileI = i
+        val (sWithLabel, j) = al(s, i + 1)
+        (w.copy(s = sWithLabel, l = Some(whileI)), j)
+      }
+      case _ => throw new IllegalArgumentException(s"Label already assigned: $s")
+    }
+    val (sFinal, _) = al(s)
+    sFinal
+  }
+
 }
 

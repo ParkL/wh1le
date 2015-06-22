@@ -8,15 +8,15 @@ class LiveVariablesTest extends FunSpec with Matchers {
   import WhileSyntax._
   private val yTimesY: BinaryAExp = BinaryAExp("y", "*", "y")
 
-  val example = List[Statement](
-    Assignment("x", 2, 1), 
-    Assignment("y", 4, 2), 
-    Assignment("x", 1, 3), 
-    If(ROpBExp("y", ">", "x"), 4,
-      Assignment("z", "y", 5),
-      Assignment("z", yTimesY, 6)),
-    Assignment("x", "z", 7)
-  )
+  val example = assignLabels(List[Statement](
+    Assignment("x", 2),
+    Assignment("y", 4),
+    Assignment("x", 1),
+    If(ROpBExp("y", ">", "x"),
+      Assignment("z", "y"),
+      Assignment("z", yTimesY)),
+    Assignment("x", "z")
+  ))
 
   describe("LiveVariablesAnalysis") {
     it("should properly create kill lists") {
