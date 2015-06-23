@@ -1,7 +1,8 @@
 package com.github.parkl.wh1le
 import language.implicitConversions
+import scala.util.parsing.combinator.JavaTokenParsers
 
-object WhileSyntax {
+object WhileSyntax extends JavaTokenParsers{
   type FlowElement = (Int, Int)
   sealed trait Block {
     val l:Option[Int]
@@ -14,7 +15,7 @@ object WhileSyntax {
   case object Div extends AOp { override def toString() = "/" }
 
   sealed abstract trait AExp
-  case class Ide(x: String) extends AExp {override def toString() = x}
+  case class Ide(x: String) extends AExp { override def toString() = x}
   case class Number(n: Int) extends AExp { override def toString() = s"$n"}
   case class BinaryAExp(a1:AExp, op: AOp, a2:AExp) extends AExp {
     override def toString() = {
@@ -45,10 +46,11 @@ object WhileSyntax {
   sealed abstract trait ROp
   case object Lt extends ROp { override def toString() = "<"}
   case object Gt extends ROp { override def toString() = ">"}
-
+  case object Eq extends ROp { override def toString() = "="}
   implicit def str2ROp(s:String): ROp = s match {
     case "<" => Lt
     case ">" => Gt
+    case "=" => Eq
   }
 
   sealed abstract trait BExp
@@ -195,6 +197,14 @@ object WhileSyntax {
     case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
 
+  def fv(s:Statement):Set[Ide] = s match {
+    case Assignment(id, exp, _) => Set(id) ++ fv(exp)
+    case Skip(_) => Set.empty
+    case Composition(s1, s2) => fv(s1) ++ fv(s2)
+    case If(b, s1, s2, _) => fv(b) ++ fv(s1) ++ fv(s2)
+    case While(cond, s, _) => fv(cond) ++ fv(s)
+  }
+
   def assignLabels(s:Statement):Statement = {
     def al(s:Statement, i:Int = 1):(Statement, Int) = s match {
       case a @ Assignment(id, exp, None) => (a.copy(l = Some(i)), i + 1)
@@ -220,6 +230,5 @@ object WhileSyntax {
     val (sFinal, _) = al(s)
     sFinal
   }
-
 }
 

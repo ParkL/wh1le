@@ -12,7 +12,7 @@ class WhileSpec extends FunSpec with Matchers {
     While(
       ROpBExp("x", Gt, 0), Composition(
         Assignment("z", BinaryAExp("z", "*", "y")),
-        Assignment("x", BinaryAExp("x", "-", "1"))
+        Assignment("x", BinaryAExp("x", "-", 1))
       )
     )
   ))
@@ -44,6 +44,16 @@ class WhileSpec extends FunSpec with Matchers {
     Assignment("a", "x"))
   )
 
+  val fvWeirdBug = assignLabels(List[Statement](
+    Assignment("x", 5),
+    Assignment("y", 1),
+    While(ROpBExp("x", ">", 1),
+      List[Statement](
+        Assignment("y", BinaryAExp("x", "*", "y")),
+        Assignment("x", BinaryAExp("x", "-", 1))
+      )
+    )
+  ))
 
   describe("Syntax") {
     describe("AExp") {
@@ -105,6 +115,9 @@ class WhileSpec extends FunSpec with Matchers {
         val fiveTimesXMinusY = BinaryAExp(fiveTimesX, "-", "y")
         val exp1 = ROpBExp(fiveTimesXMinusY, "<", 5)
         fv(exp1) should equal(Set(Ide("x"), Ide("y")))
+      }
+      it("should compute fv of statements") {
+        fv(fvWeirdBug) should equal(Set(Ide("x"), Ide("y")))
       }
     }
   }

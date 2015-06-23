@@ -36,7 +36,7 @@ class DominatorTest extends FunSpec with Matchers {
 
   describe("The Dominator Analysis") {
     it("should somehow work") {
-      val (enter, leave) = Dominator(sheet9).solve()
+      // val (enter, leave) = Dominator(sheet9).solve()
       // TODO
     }
   }

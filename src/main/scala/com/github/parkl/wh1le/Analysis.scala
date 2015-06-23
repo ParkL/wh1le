@@ -177,26 +177,66 @@ class Dominator(s:Statement) extends Analysis(s) {
   override def E: Set[Int] = Set(init(s))
 }
 
-//class ReachingDefinition(s:Statement) extends Analysis(s) {
-//  override type L = (Ide, Int)
-//
-//  override def kill(i: Int): Set[L] = bx(i).get match {
-//    case Assignment(id, exp, l) =>
-//    case Skip(l) =>
-//    case If(b, l, s1, s2) =>
-//    case While(cond, l, s) =>
-//  }
-//  override def gen(i: Int): Set[L] = bx(i).get match {
-//    case Assignment(id, exp, l) => Set((id,l))
-//    case Skip(l) => Set.empty
-//    case If(b, l, s1, s2) => Set.empty
-//    case While(cond, l, s) => Set.empty
-//  }
-//
-//  override def bottom: Set[L] = Set.empty
-//  override def cup: (Set[L], Set[L]) => Set[L] = union
-//  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft
-//  override def F: Set[FlowElement] = flow(s)
-//  override def i: Set[L] = ???
-//  override def E: Set[Int] = f1nal(s)
-//}
+object ReachingDefinition {
+  def apply(s:Statement) = new ReachingDefinition(s)
+}
+
+class ReachingDefinition(s:Statement) extends Analysis(s) {
+  override type L = (Ide, Int)
+
+  def used(b:Block):Set[Ide] = b match {
+    case Assignment(id, exp, l) => fv(exp)
+    case Skip(l) => Set.empty
+    case If(b, s1, s2, l) => fv(b)
+    case While(cond, s, l) => fv(cond)
+  }
+
+  def ud(p: L):Set[Int] = {
+    val (id, i)  = p
+    val (enter, _) = solve()
+    if(used(bx(i).get).contains(id)) for {
+      (x, ll) <- enter(i)
+      if id == x
+    } yield ll
+    else Set.empty
+  }
+
+  def du(p: L):Set[Int] = {
+    val (x, i) = p
+    for {
+      bs <- blocks(s)
+      ll <- bs.l
+      if ud((x, ll)).contains(i)
+    } yield ll
+  }
+
+  def maybeLabelIfAssignmentToX(b:Block, x:Ide):Option[Int] = b match {
+    case Assignment(`x`, exp, Some(l))  => Some(l)
+    case _ => None
+  }
+  
+  def blockNosWithAssignmentToX(x:Ide):Set[Int] = for {
+    b <- blocks(s)
+    x <- maybeLabelIfAssignmentToX(b, x)
+  } yield x
+  
+  override def kill(i: Int): Set[L] = bx(i).get match {
+    case Assignment(id, exp, l) => Set((id, -1)) union (for {
+      ll <- blockNosWithAssignmentToX(id)
+    } yield (id, ll))
+    case _ => Set.empty
+  }
+  override def gen(i: Int): Set[L] = bx(i).get match {
+    case Assignment(id, exp, Some(l)) => Set((id, l))
+    case _ => Set.empty
+  }
+
+  override def bottom: Set[L] = Set.empty
+  override def cup: (Set[L], Set[L]) => Set[L] = union
+  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft
+  override def F: Set[FlowElement] = flow(s)
+  override def i: Set[L] = for {
+    v <- fv(s)
+  } yield (v, -1)
+  override def E: Set[Int] = Set(init(s))
+}
