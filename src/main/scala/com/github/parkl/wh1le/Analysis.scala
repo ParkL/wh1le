@@ -160,19 +160,14 @@ object Dominator {
 class Dominator(s:Statement) extends Analysis(s) {
   override type L = Int // label
 
-  override def gen(i: Int): Set[L] = bx(i).get match {
-    case Assignment(id, exp, Some(l)) => Set(l)
-    case Skip(l) => Set.empty
-    case If(b, s1, s2, l) => Set.empty
-    case While(cond, s, l) => Set.empty
-    case _ => ???
-  }
+  override def gen(i: Int): Set[L] = Set(i)
+
   override def kill(i: Int): Set[L] = Set.empty
 
-  override def bottom: Set[L] = Set.empty
+  override def bottom: Set[L] = blocks(s).flatMap(_.l)
   override def cup: (Set[L], Set[L]) => Set[L] = intersect
   override def F: Set[(Int, Int)] = flow(s)
-  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft // ???
+  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
   override def i: Set[L] = Set.empty
   override def E: Set[Int] = Set(init(s))
 }
