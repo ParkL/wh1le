@@ -94,10 +94,10 @@ object WhileSyntax extends JavaTokenParsers{
     override def toString() = s"$s1 ; $s2"
   }
   case class If(b: BExp, s1: Statement, s2: Statement, l: Option[Int] = None) extends Statement with Block {
-    override def toString() = s"if [$b]^$l then $s1 else $s2"
+    override def toString() = s"(if [$b]^$l then $s1 else $s2)"
   }
   case class While(cond: BExp, s: Statement, l: Option[Int] = None) extends Statement with Block {
-    override def toString() = s"while [$cond]^$l do $s od"
+    override def toString() = s"(while [$cond]^$l do $s)"
   }
 
   // TODO make tail
