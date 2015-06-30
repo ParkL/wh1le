@@ -10,25 +10,25 @@ abstract class Analysis(s:Statement) { self =>
   type L
   def F: Set[FlowElement]
   def E: Set[Int]
-  def i: Set[L]
-  def bottom: Set[L]
-  def <= : (Set[L], Set[L]) => Boolean
-  def cup: (Set[L], Set[L]) => Set[L]
+  def i: L
+  def bottom: L
+  def <= : (L, L) => Boolean
+  def cup: (L, L) => L
 
-  def gen(i:Int):Set[L]
-  def kill(i:Int):Set[L]
-  def fl(A: ResultMap, l: Int): Set[L] = (A(l) -- kill(l)) union gen(l)
+/*  def gen(i:Int):Set[L]
+  def kill(i:Int):Set[L]*/
+  def fl(A: Map[Int, L], l: Int): L
 
   // I can haz binary operators on stuff
-  implicit class CupProvider(s1: Set[L]) {
-    def cup(s2: Set[L]) = self.cup(s1, s2)
+  implicit class CupProvider(s1: L) {
+    def cup(s2: L):L = self.cup(s1, s2)
   }
 
-  implicit class NotSubSomethingProvider(s1: Set[L]) {
-    def <=(s2: Set[L]) = self.<=(s1, s2)
+  implicit class NotSubSomethingProvider(s1: L) {
+    def <=(s2: L) = self.<=(s1, s2)
   }
 
-  type ResultMap = Map[Int, Set[L]]
+  type ResultMap = Map[Int, L]
   type Logger = ( FlowElement,        // Current element
                   List[FlowElement],  // Rest of worklist,
                   ResultMap,          // A
@@ -66,16 +66,18 @@ object AvailableExpression {
   def apply(s: Statement) = new AvailableExpression(s)
 }
 class AvailableExpression(s: Statement) extends Analysis(s) {
-  override type L = AExp
+  override type L = Set[AExp]
 
-  override def kill(i:Int):Set[AExp] = bx(i).get match {
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
+
+  def kill(i:Int):L = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aPrime <- aExpStar(s)
       if fv(aPrime).contains(id)
     } yield aPrime
     case _ => Set.empty
   }
-  override def gen(i:Int):Set[AExp] = bx(i).get match {
+  def gen(i:Int):L = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aPrime <- aExp(exp)
       if !(fv(aPrime).contains(id))
@@ -88,10 +90,10 @@ class AvailableExpression(s: Statement) extends Analysis(s) {
 
   override def F: Set[FlowElement] = flow(s)
   override def E: Set[Int] = Set(init(s))
-  override def i: Set[L] = Set.empty[L]
-  override def bottom: Set[L] = aExpStar(s)
-  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
-  override def cup: (Set[L], Set[L]) => Set[L] = intersect
+  override def i: L = Set.empty
+  override def bottom: L = aExpStar(s)
+  override def <= : (L, L) => Boolean = (s1, s2) => s2 subsetOf s1
+  override def cup: (L, L) => L = (s1, s2) => s1 intersect s2
 }
 
 object LiveVariables {
@@ -99,28 +101,30 @@ object LiveVariables {
 }
 
 class LiveVariables(s:Statement) extends Analysis(s) {
-  override type L = Ide
+  override type L = Set[Ide]
 
-  override def kill(i: Int):Set[L] = bx(i).get match {
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
+
+  def kill(i: Int):L = bx(i).get match {
     case Assignment(id, exp, l) => Set(id)
     case Skip(l) => Set.empty
     case If(b, s1, s2, _) => Set.empty
     case While(cond, s, _) => Set.empty
   }
 
-  override def gen(i: Int): Set[L] = bx(i).get match {
+  def gen(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => fv(exp)
     case Skip(l) => Set.empty
     case If(b, s1, s2, _) => fv(b)
     case While(cond, s, _) => fv(cond)
   }
 
-  override def bottom: Set[L] = Set.empty[L]
-  override def cup: (Set[L], Set[L]) => Set[L] = union
+  override def bottom: L = Set.empty
+  override def cup: (L, L) => L = _ union _
   override def F: Set[FlowElement] = flowR(s)
-  override def i: Set[L] = Set.empty[L]
+  override def i: L = Set.empty
   override def E: Set[Int] = f1nal(s)
-  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft
+  override def <= : (L, L) => Boolean = (s1, s2) => s1 subsetOf s2
 }
 
 object VeryBusyExpression {
@@ -128,9 +132,11 @@ object VeryBusyExpression {
 }
 
 class VeryBusyExpression(s:Statement) extends Analysis(s) {
-  override type L = AExp
+  override type L = Set[AExp]
 
-  override def kill(i: Int): Set[L] = bx(i).get match {
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
+
+  def kill(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aP <- aExpStar(s)
       if (fv(aP).contains(id))
@@ -139,18 +145,18 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
     case If(b, s1, s2, _) => Set.empty
     case While(cond, s, _) => Set.empty
   }
-  override def gen(i: Int): Set[L] = bx(i).get match {
+  def gen(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => aExp(exp)
     case Skip(l) => Set.empty
     case If(b, s1, s2, _) => aExp(b)
     case While(cond, s, _) => aExp(cond)
   }
 
-  override def bottom: Set[L] = aExpStar(s)
-  override def cup: (Set[L], Set[L]) => Set[L] = intersect
-  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
+  override def bottom: L = aExpStar(s)
+  override def cup: (L, L) => L = _ intersect _
+  override def <= : (L, L) => Boolean = (s1, s2) => s2 subsetOf s1
   override def F: Set[FlowElement] = flowR(s)
-  override def i: Set[L] = Set.empty
+  override def i: L = Set.empty
   override def E: Set[Int] = f1nal(s)
 }
 
@@ -158,17 +164,18 @@ object Dominator {
   def apply(s:Statement) = new Dominator(s)
 }
 class Dominator(s:Statement) extends Analysis(s) {
-  override type L = Int // label
+  override type L = Set[Int] // label
 
-  override def gen(i: Int): Set[L] = Set(i)
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
 
-  override def kill(i: Int): Set[L] = Set.empty
+  def gen(i: Int): L = Set(i)
+  def kill(i: Int): L = Set.empty
 
-  override def bottom: Set[L] = blocks(s).flatMap(_.l)
-  override def cup: (Set[L], Set[L]) => Set[L] = intersect
+  override def bottom: L = blocks(s).flatMap(_.l)
+  override def cup: (L, L) => L = _ intersect _
   override def F: Set[(Int, Int)] = flow(s)
-  override def <= : (Set[L], Set[L]) => Boolean = subsetRight
-  override def i: Set[L] = Set.empty
+  override def <= : (L, L) => Boolean = (s1, s2) => s2 subsetOf s1
+  override def i: L = Set.empty
   override def E: Set[Int] = Set(init(s))
 }
 
@@ -177,7 +184,7 @@ object ReachingDefinition {
 }
 
 class ReachingDefinition(s:Statement) extends Analysis(s) {
-  override type L = (Ide, Int)
+  override type L = Set[(Ide, Int)]
 
   def used(b:Block):Set[Ide] = b match {
     case Assignment(id, exp, l) => fv(exp)
@@ -186,7 +193,7 @@ class ReachingDefinition(s:Statement) extends Analysis(s) {
     case While(cond, s, l) => fv(cond)
   }
 
-  def ud(p: L):Set[Int] = {
+  def ud(p: (Ide, Int)):Set[Int] = {
     val (id, i)  = p
     val (enter, _) = solve()
     if(used(bx(i).get).contains(id)) for {
@@ -196,7 +203,7 @@ class ReachingDefinition(s:Statement) extends Analysis(s) {
     else Set.empty
   }
 
-  def du(p: L):Set[Int] = {
+  def du(p: (Ide, Int)):Set[Int] = {
     val (x, i) = p
     for {
       bs <- blocks(s)
@@ -214,23 +221,25 @@ class ReachingDefinition(s:Statement) extends Analysis(s) {
     b <- blocks(s)
     x <- maybeLabelIfAssignmentToX(b, x)
   } yield x
-  
-  override def kill(i: Int): Set[L] = bx(i).get match {
+
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
+
+  def kill(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => Set((id, -1)) union (for {
       ll <- blockNosWithAssignmentToX(id)
     } yield (id, ll))
     case _ => Set.empty
   }
-  override def gen(i: Int): Set[L] = bx(i).get match {
+  def gen(i: Int): L = bx(i).get match {
     case Assignment(id, exp, Some(l)) => Set((id, l))
     case _ => Set.empty
   }
 
-  override def bottom: Set[L] = Set.empty
-  override def cup: (Set[L], Set[L]) => Set[L] = union
-  override def <= : (Set[L], Set[L]) => Boolean = subsetLeft
+  override def bottom: L = Set.empty
+  override def cup: (L, L) => L = _ union _
+  override def <= : (L, L) => Boolean = (s1, s2) => s1 subsetOf s2
   override def F: Set[FlowElement] = flow(s)
-  override def i: Set[L] = for {
+  override def i: L = for {
     v <- fv(s)
   } yield (v, -1)
   override def E: Set[Int] = Set(init(s))
