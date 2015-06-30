@@ -6,6 +6,7 @@ import language.implicitConversions
 /**
  * Created by bernd on 5/21/15.
  */
+
 abstract class Analysis(s:Statement) { self =>
   type L
   def F: Set[FlowElement]
@@ -15,8 +16,6 @@ abstract class Analysis(s:Statement) { self =>
   def <= : (L, L) => Boolean
   def cup: (L, L) => L
 
-/*  def gen(i:Int):Set[L]
-  def kill(i:Int):Set[L]*/
   def fl(A: Map[Int, L], l: Int): L
 
   // I can haz binary operators on stuff
@@ -58,14 +57,17 @@ abstract class Analysis(s:Statement) { self =>
   }
 }
 
+trait GenKill[SET_TYPE] { self: Analysis =>
+  type L = Set[SET_TYPE]
+  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
+  def kill(i:Int): L
+  def gen(i:Int): L
+}
+
 object AvailableExpression {
   def apply(s: Statement) = new AvailableExpression(s)
 }
-class AvailableExpression(s: Statement) extends Analysis(s) {
-  override type L = Set[AExp]
-
-  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
-
+class AvailableExpression(s: Statement) extends Analysis(s) with GenKill[AExp] {
   def kill(i:Int):L = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aPrime <- aExpStar(s)
@@ -96,11 +98,7 @@ object LiveVariables {
   def apply(s:Statement) = new LiveVariables(s)
 }
 
-class LiveVariables(s:Statement) extends Analysis(s) {
-  override type L = Set[Ide]
-
-  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
-
+class LiveVariables(s:Statement) extends Analysis(s) with GenKill[Ide] {
   def kill(i: Int):L = bx(i).get match {
     case Assignment(id, exp, l) => Set(id)
     case Skip(l) => Set.empty
@@ -127,11 +125,7 @@ object VeryBusyExpression {
   def apply(s:Statement) = new VeryBusyExpression(s)
 }
 
-class VeryBusyExpression(s:Statement) extends Analysis(s) {
-  override type L = Set[AExp]
-
-  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
-
+class VeryBusyExpression(s:Statement) extends Analysis(s) with GenKill[AExp] {
   def kill(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => for {
       aP <- aExpStar(s)
@@ -159,11 +153,7 @@ class VeryBusyExpression(s:Statement) extends Analysis(s) {
 object Dominator {
   def apply(s:Statement) = new Dominator(s)
 }
-class Dominator(s:Statement) extends Analysis(s) {
-  override type L = Set[Int] // label
-
-  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
-
+class Dominator(s:Statement) extends Analysis(s) with GenKill[Int]{
   def gen(i: Int): L = Set(i)
   def kill(i: Int): L = Set.empty
 
@@ -179,9 +169,7 @@ object ReachingDefinition {
   def apply(s:Statement) = new ReachingDefinition(s)
 }
 
-class ReachingDefinition(s:Statement) extends Analysis(s) {
-  override type L = Set[(Ide, Int)]
-
+class ReachingDefinition(s:Statement) extends Analysis(s) with GenKill[(Ide,Int)]{
   def used(b:Block):Set[Ide] = b match {
     case Assignment(id, exp, l) => fv(exp)
     case Skip(l) => Set.empty
@@ -217,8 +205,6 @@ class ReachingDefinition(s:Statement) extends Analysis(s) {
     b <- blocks(s)
     x <- maybeLabelIfAssignmentToX(b, x)
   } yield x
-
-  override def fl(A:Map[Int, L], l:Int) = (A(l) -- kill(l)) union gen(l)
 
   def kill(i: Int): L = bx(i).get match {
     case Assignment(id, exp, l) => Set((id, -1)) union (for {
