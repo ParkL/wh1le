@@ -37,10 +37,6 @@ abstract class Analysis(s:Statement) { self =>
 
   private val emptyLogger: (Logger) = (_,_,_,_) => {}
   protected val bx = block(s)_
-  def subsetLeft(s1: Set[L], s2: Set[L]) = s1 subsetOf s2
-  def subsetRight(s1: Set[L], s2: Set[L]) = s2 subsetOf s1
-  def union(s1: Set[L], s2:Set[L]) = s1 union s2
-  def intersect(s1: Set[L], s2:Set[L]) = s1 intersect s2
 
   def solve(logger:Logger = emptyLogger):(ResultMap, ResultMap) = {
     def flA(A: ResultMap) = A collect { case (l, v) => l -> fl(A, l) }
