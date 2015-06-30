@@ -103,7 +103,7 @@ object TestPrograms {
 //  w:=x
 
   val program5 = assignLabels(List[Statement](
-    Assignment("x", 0),
+    Assignment("z", 0),
     While(Not(ROpBExp("x", "=", "y")), List[Statement](
       Assignment("z", BinaryAExp("z", "+", 1)),
       If(ROpBExp("x", ">", "y"),
@@ -116,7 +116,7 @@ object TestPrograms {
 
   val program6 = assignLabels(List[Statement](
     Assignment("x", "y"),
-    Assignment("x", 25),
+    Assignment("y", 25),
     While(ROpBExp("y", ">", "x"),
       While(ROpBExp("x", "<", 5),
         Assignment("x", BinaryAExp("x", "+", "y"))
