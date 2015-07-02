@@ -45,9 +45,6 @@ object WhileSyntax extends JavaTokenParsers{
   implicit def string2Ide(s:String) = Ide(s)
   implicit def int2Number(n:Int) = Number(n)
 
-  sealed abstract trait BOp
-  case object eq extends BOp { override def toString() = "="}
-
   sealed abstract trait ROp
   case object Lt extends ROp { override def toString() = "<"}
   case object Gt extends ROp { override def toString() = ">"}
@@ -62,18 +59,7 @@ object WhileSyntax extends JavaTokenParsers{
   case object True extends BExp { override def toString() = "True" }
   case object False extends BExp { override def toString() = "False"}
   case class Not(b: BExp) extends BExp { override def toString() = s"not($b)"}
-  case class BOpBExp(b1:BExp, bOp: BOp, b2:BExp) extends BExp {
-    override def toString() = {
-      def parens(be:BExp) = be match {
-        case b: BOpBExp => s"($b)"
-        case r: ROpBExp => s"($r)"
-        case x @ _ => x
-      }
-      val lhs = parens(b1)
-      val rhs = parens(b2)
-      s"$lhs $bOp $rhs"
-    }
-  }
+
   case class ROpBExp(a1: AExp, rOp: ROp, a2: AExp) extends BExp {
     override def toString() = {
       def parens(ae:AExp) = ae match {
@@ -176,7 +162,6 @@ object WhileSyntax extends JavaTokenParsers{
     case True => Set.empty
     case False => Set.empty
     case Not(b) => aExp(b)
-    case BOpBExp(b1, bOp, b2) => Set.empty
     case ROpBExp(a1, rOp, a2) => aExp(a1) ++ aExp(a2)
   }
 
@@ -199,7 +184,6 @@ object WhileSyntax extends JavaTokenParsers{
     case True => Set.empty
     case False => Set.empty
     case Not(b) => fv(b)
-    case BOpBExp(b1, bOp, b2) => fv(b1) ++ fv(b2)
   }
 
   def fv(s:Statement):Set[Ide] = s match {
