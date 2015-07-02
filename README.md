@@ -10,11 +10,11 @@ What's there:
   - Available Expression
   - Live Variables
   - Very Busy Expression
+  - Reaching Definition
 - Tests
 
 TODO:
 
 - Proper documentation
-- Lexer and Parser OR proper embedding into scala
+- Lexer and Parser OR proper embedding into Scala
 - Tail calls for functions like "flow" / using scala functors where possible.
-- Automatic label counting
