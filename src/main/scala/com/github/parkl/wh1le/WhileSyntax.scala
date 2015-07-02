@@ -8,6 +8,11 @@ object WhileSyntax extends JavaTokenParsers{
     val l:Option[Int]
   }
 
+  implicit def l2s(o: Option[Int]):String = o match {
+    case None => "?"
+    case Some(x) => s"$x"
+  }
+
   sealed abstract trait AOp
   case object Plus extends AOp { override def toString() = "+" }
   case object Minus extends AOp { override def toString() = "-" }
@@ -85,19 +90,19 @@ object WhileSyntax extends JavaTokenParsers{
 
   sealed abstract trait Statement
   case class Assignment(id:Ide, exp:AExp, l:Option[Int] = None) extends Statement with Block {
-    override def toString() = s"[$id := $exp]^$l"
+    override def toString() = s"[$id := $exp]^${l2s(l)}"
   }
   case class Skip(l: Option[Int] = None) extends Statement with Block {
-    override def toString() = s"[skip]^$l"
+    override def toString() = s"[skip]^${l2s(l)}"
   }
   case class Composition(s1: Statement, s2:Statement) extends Statement {
     override def toString() = s"$s1 ; $s2"
   }
   case class If(b: BExp, s1: Statement, s2: Statement, l: Option[Int] = None) extends Statement with Block {
-    override def toString() = s"(if [$b]^$l then $s1 else $s2)"
+    override def toString() = s"(if [$b]^${l2s(l)} then $s1 else $s2)"
   }
   case class While(cond: BExp, s: Statement, l: Option[Int] = None) extends Statement with Block {
-    override def toString() = s"(while [$cond]^$l do $s)"
+    override def toString() = s"(while [$cond]^${l2s(l)} do $s)"
   }
 
   // TODO make tail

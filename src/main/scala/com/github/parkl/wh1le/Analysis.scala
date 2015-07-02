@@ -7,7 +7,7 @@ import language.implicitConversions
  * Created by bernd on 5/21/15.
  */
 
-abstract class Analysis(s:Statement) { self =>
+abstract class Analysis(val s:Statement) { self =>
   type L
   def F: Set[FlowElement]
   def E: Set[Int]
